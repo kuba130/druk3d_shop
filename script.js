@@ -4,10 +4,13 @@
 // =============================================
 
 // ⚠️ WAŻNE: Wpisz TUTAJ swoje dane z Supabase!
-const SUPABASE_URL = 'https://ussbdnhpgjnwmyaroecl.supabase.com';  // ← Z KROKU 5!
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzc2JkbmhwZ2pud215YXJvZWNsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTMxNzI3MCwiZXhwIjoyMDk0ODkzMjcwfQ.CkLBt_14l3w3P7s2iw87IRbvaWxM-DL5-Q4JX7oFtAo';  // ← Z KROKU 5!
-const ADMIN_PASSWORD = 'admin123';  // ← TWOJE HASŁO
+// =============================================
+// Druk3D Shop - Supabase
+// =============================================
 
+const SUPABASE_URL = 'https://ussbdnhpgjnwmyaroecl.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzc2JkbmhwZ2pud215YXJvZWNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMTcyNzAsImV4cCI6MjA5NDg5MzI3MH0.AiH1Z3Lwo3P8T9ZMFXKsDaY1fp_KtnVDju0fAj-3fFk';
+const ADMIN_PASSWORD = 'admin123'
 // ===== KLIENT SUPABASE =====
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
