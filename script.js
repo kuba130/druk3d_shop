@@ -3,32 +3,18 @@
 // GitHub Pages ready
 // =============================================
 
-// ⚠️ WAŻNE: Wklej TUTAJ swoje dane z Supabase!
+// ⚠️ WAŻNE: Wpisz TUTAJ swoje dane z Supabase!
 const SUPABASE_URL = 'https://ussbdnhpgjnwmyaroecl.supabase.com';  // ← Z KROKU 5!
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzc2JkbmhwZ2pud215YXJvZWNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMTcyNzAsImV4cCI6MjA5NDg5MzI3MH0.AiH1Z3Lwo3P8T9ZMFXKsDaY1fp_KtnVDju0fAj-3fFk';  // ← Z KROKU 5!
-// ⬆️ ZASTĄP POWYŻSZE SWOIMI DANYMI ⬆️
-
-// Hasło do panelu admina
-const ADMIN_PASSWORD = 'admin';  // ← ZMIEŃ NA SWOJE HASŁO!
+const ADMIN_PASSWORD = 'admin123';  // ← TWOJE HASŁO
 
 // ===== KLIENT SUPABASE =====
-const supabase = window.supabase;
-let supabaseClient = null;
-
-function getClient() {
-    if (!supabaseClient) {
-        // Dynamiczny import supabase
-        const { createClient } = supabase;
-        supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-    }
-    return supabaseClient;
-}
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ===== FUNKCJE BAZY DANYCH =====
 async function getProducts() {
     try {
-        const client = getClient();
-        const { data, error } = await client
+        const { data, error } = await supabaseClient
             .from('products')
             .select('*')
             .order('created_at', { ascending: false });
@@ -36,15 +22,14 @@ async function getProducts() {
         if (error) throw error;
         return data || [];
     } catch (error) {
-        console.error("Błąd pobierania produktów:", error);
+        console.error("Błąd pobierania:", error);
         return [];
     }
 }
 
 async function addProduct(product) {
     try {
-        const client = getClient();
-        const { data, error } = await client
+        const { data, error } = await supabaseClient
             .from('products')
             .insert([{
                 name: product.name,
@@ -64,8 +49,7 @@ async function addProduct(product) {
 
 async function deleteProduct(id) {
     try {
-        const client = getClient();
-        const { error } = await client
+        const { error } = await supabaseClient
             .from('products')
             .delete()
             .eq('id', id);
@@ -88,11 +72,7 @@ function escapeHtml(text) {
 
 function renderProductImage(imageUrl, altText) {
     if (imageUrl && imageUrl.trim() !== '') {
-        return `<img src="${escapeHtml(imageUrl)}" 
-                     alt="${escapeHtml(altText)}" 
-                     loading="lazy"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <span class="placeholder-icon" style="display:none;">🖨️</span>`;
+        return `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(altText)}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="placeholder-icon" style="display:none;">🖨️</span>`;
     }
     return '<span class="placeholder-icon">🖨️</span>';
 }
@@ -111,7 +91,7 @@ function showToast(message) {
     }, 2600);
 }
 
-// ===== SESJA LOGOWANIA (sessionStorage) =====
+// ===== SESJA LOGOWANIA =====
 function isLoggedIn() {
     return sessionStorage.getItem('admin_logged_in') === 'true';
 }
@@ -137,20 +117,20 @@ async function renderShop() {
     if (!grid) return;
     
     grid.innerHTML = '';
-    loadingMsg.style.display = 'block';
-    emptyMsg.style.display = 'none';
+    if (loadingMsg) loadingMsg.style.display = 'block';
+    if (emptyMsg) emptyMsg.style.display = 'none';
     
     const products = await getProducts();
     
-    loadingMsg.style.display = 'none';
+    if (loadingMsg) loadingMsg.style.display = 'none';
     
     if (products.length === 0) {
         grid.innerHTML = '';
-        emptyMsg.style.display = 'block';
+        if (emptyMsg) emptyMsg.style.display = 'block';
         return;
     }
     
-    emptyMsg.style.display = 'none';
+    if (emptyMsg) emptyMsg.style.display = 'none';
     
     grid.innerHTML = products.map(product => `
         <article class="product-card">
@@ -160,10 +140,8 @@ async function renderShop() {
             <div class="product-body">
                 <h3>${escapeHtml(product.name)}</h3>
                 <p class="product-description">${escapeHtml(product.description) || 'Brak opisu produktu'}</p>
-                <p class="product-price">${(product.price || 0).toFixed(2)} PLN</p>
-                <button class="btn btn-primary" disabled title="Funkcja zamawiania wkrótce">
-                    🛒 Zamów (demo)
-                </button>
+                <p class="product-price">${(Number(product.price) || 0).toFixed(2)} PLN</p>
+                <button class="btn btn-primary" disabled>🛒 Zamów (demo)</button>
             </div>
         </article>
     `).join('');
@@ -183,11 +161,11 @@ async function renderAdminProducts() {
     
     if (products.length === 0) {
         list.innerHTML = '';
-        empty.style.display = 'block';
+        if (empty) empty.style.display = 'block';
         return;
     }
     
-    empty.style.display = 'none';
+    if (empty) empty.style.display = 'none';
     
     list.innerHTML = products.map(product => `
         <div class="admin-product-item">
@@ -197,20 +175,18 @@ async function renderAdminProducts() {
                 </div>
                 <div class="admin-product-details">
                     <strong title="${escapeHtml(product.name)}">${escapeHtml(product.name)}</strong>
-                    <span>${(product.price || 0).toFixed(2)} PLN</span>
+                    <span>${(Number(product.price) || 0).toFixed(2)} PLN</span>
                 </div>
             </div>
-            <button class="btn btn-danger" data-delete-id="${product.id}">
-                🗑️ Usuń
-            </button>
+            <button class="btn btn-danger" data-delete-id="${product.id}">🗑️ Usuń</button>
         </div>
     `).join('');
     
-    // Podpinanie event listenerów
+    // Podpinanie przycisków usuwania
     list.querySelectorAll('.btn-danger').forEach(btn => {
         btn.addEventListener('click', async function() {
             const id = this.dataset.deleteId;
-            if (!confirm('Czy na pewno chcesz usunąć ten produkt?')) return;
+            if (!confirm('Usunąć ten produkt?')) return;
             
             const result = await deleteProduct(id);
             if (result.success) {
@@ -230,7 +206,7 @@ function setupLoginForm() {
     
     if (!loginForm) return;
     
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         const password = document.getElementById('loginPassword').value;
@@ -238,9 +214,11 @@ function setupLoginForm() {
         if (login(password)) {
             showAdminPanel();
         } else {
-            loginError.textContent = '❌ Nieprawidłowe hasło';
-            loginError.style.display = 'block';
-            setTimeout(() => { loginError.style.display = 'none'; }, 3000);
+            if (loginError) {
+                loginError.textContent = '❌ Nieprawidłowe hasło';
+                loginError.style.display = 'block';
+                setTimeout(() => { loginError.style.display = 'none'; }, 3000);
+            }
         }
     });
 }
@@ -249,7 +227,7 @@ function setupLogoutButton() {
     const logoutBtn = document.getElementById('logoutBtn');
     if (!logoutBtn) return;
     
-    logoutBtn.addEventListener('click', () => {
+    logoutBtn.addEventListener('click', function() {
         logout();
         showLoginScreen();
     });
@@ -263,6 +241,10 @@ function showLoginScreen() {
     if (loginScreen) loginScreen.style.display = 'flex';
     if (adminPanel) adminPanel.style.display = 'none';
     if (logoutBtn) logoutBtn.style.display = 'none';
+    
+    // Wyczyść pole hasła
+    const passInput = document.getElementById('loginPassword');
+    if (passInput) passInput.value = '';
 }
 
 function showAdminPanel() {
@@ -284,7 +266,7 @@ function setupAdminForm() {
     
     if (!form) return;
     
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const name = document.getElementById('productName').value.trim();
@@ -293,10 +275,12 @@ function setupAdminForm() {
         const description = document.getElementById('productDescription').value.trim();
         
         if (!name || !price || price <= 0) {
-            feedback.textContent = '❌ Wypełnij nazwę i prawidłową cenę';
-            feedback.className = 'form-feedback error';
-            feedback.style.display = 'block';
-            setTimeout(() => { feedback.style.display = 'none'; }, 3000);
+            if (feedback) {
+                feedback.textContent = '❌ Wypełnij nazwę i prawidłową cenę';
+                feedback.className = 'form-feedback error';
+                feedback.style.display = 'block';
+                setTimeout(() => { feedback.style.display = 'none'; }, 3000);
+            }
             return;
         }
         
@@ -305,8 +289,46 @@ function setupAdminForm() {
         if (result.success) {
             form.reset();
             await renderAdminProducts();
-            feedback.textContent = '✅ Produkt dodany pomyślnie!';
-            feedback.className = 'form-feedback success';
+            if (feedback) {
+                feedback.textContent = '✅ Produkt dodany!';
+                feedback.className = 'form-feedback success';
+                feedback.style.display = 'block';
+                setTimeout(() => { feedback.style.display = 'none'; }, 3000);
+            }
+            showToast('✅ Produkt dodany');
         } else {
-            feedback.textContent = '❌ Błąd: ' + result.error;
-            feedback.className = 'form-feedback error';
+            if (feedback) {
+                feedback.textContent = '❌ Błąd: ' + result.error;
+                feedback.className = 'form-feedback error';
+                feedback.style.display = 'block';
+            }
+        }
+    });
+}
+
+// ===== INICJALIZACJA STRONY =====
+function initPage() {
+    // Sprawdź, która strona
+    const isShop = document.getElementById('productsGrid');
+    const isAdmin = document.getElementById('loginScreen');
+    
+    if (isShop) {
+        renderShop();
+    }
+    
+    if (isAdmin) {
+        setupLoginForm();
+        setupLogoutButton();
+        setupAdminForm();
+        
+        // Sprawdź czy już zalogowany
+        if (isLoggedIn()) {
+            showAdminPanel();
+        } else {
+            showLoginScreen();
+        }
+    }
+}
+
+// Start
+document.addEventListener('DOMContentLoaded', initPage);
