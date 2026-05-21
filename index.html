@@ -9,10 +9,7 @@
 <body>
     <header class="header">
         <div class="header-content">
-            <div class="logo">
-                <span class="logo-icon">🖨️</span>
-                <h1>Druk3D Shop</h1>
-            </div>
+            <div class="logo"><span class="logo-icon">🖨️</span><h1>Druk3D Shop</h1></div>
             <nav>
                 <a href="./index.html" class="nav-link active">Sklep</a>
                 <a href="./admin.html" class="nav-link">Panel Admina</a>
@@ -23,31 +20,32 @@
     <main class="container">
         <section class="hero">
             <h2>Wydruki 3D na zamówienie</h2>
-            <p>Przeglądaj dostępne modele i zamawiaj wysokiej jakości wydruki 3D</p>
+            <p>Wybierz produkt i złóż zamówienie</p>
         </section>
-
         <div id="productsGrid" class="products-grid"></div>
-
-        <div id="emptyMessage" class="empty-message" style="display: none;">
-            <div class="empty-icon">📦</div>
-            <h3>Brak dostępnych produktów</h3>
-            <p>Zajrzyj później – pracujemy nad nowymi modelami!</p>
-        </div>
-
-        <div id="loadingMessage" class="empty-message">
-            <div class="empty-icon">⏳</div>
-            <h3>Ładowanie produktów...</h3>
-        </div>
+        <div id="emptyMessage" class="empty-message" style="display:none;"><div class="empty-icon">📦</div><h3>Brak produktów</h3></div>
+        <div id="loadingMessage" class="empty-message"><div class="empty-icon">⏳</div><h3>Ładowanie...</h3></div>
     </main>
 
-    <footer class="footer">
-        <p>&copy; <span id="currentYear"></span> Druk3D Shop</p>
-    </footer>
+    <!-- Modal zamówienia -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeOrderModal()">&times;</span>
+            <h2>📋 Złóż zamówienie</h2>
+            <p id="orderProductName" style="font-weight:bold;margin-bottom:1rem;"></p>
+            <form id="orderForm">
+                <input type="hidden" id="orderProduct">
+                <div class="form-group"><label>Twoje imię *</label><input type="text" id="customerName" required></div>
+                <div class="form-group"><label>Numer telefonu *</label><input type="tel" id="customerPhone" required placeholder="+48 123456789"></div>
+                <button type="submit" class="btn btn-primary">📱 Zamawiam</button>
+            </form>
+            <div id="orderFeedback" style="margin-top:1rem;text-align:center;display:none;"></div>
+        </div>
+    </div>
+
+    <footer class="footer"><p>&copy; 2026 Druk3D Shop</p></footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./script.js"></script>
-    <script>
-        document.getElementById('currentYear').textContent = new Date().getFullYear();
-    </script>
 </body>
 </html>
