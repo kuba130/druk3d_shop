@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Druk3D - Sklep z wydrukami 3D</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">🖨️</span>
+                <h1>Druk3D Shop</h1>
+            </div>
+            <nav>
+                <a href="./index.html" class="nav-link active">Sklep</a>
+                <a href="./admin.html" class="nav-link">Panel Admina</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h2>Wydruki 3D na zamówienie</h2>
+            <p>Przeglądaj dostępne modele i zamawiaj wysokiej jakości wydruki 3D</p>
+        </section>
+
+        <div id="productsGrid" class="products-grid"></div>
+
+        <div id="emptyMessage" class="empty-message" style="display: none;">
+            <div class="empty-icon">📦</div>
+            <h3>Brak dostępnych produktów</h3>
+            <p>Zajrzyj później – pracujemy nad nowymi modelami!</p>
+        </div>
+
+        <div id="loadingMessage" class="empty-message">
+            <div class="empty-icon">⏳</div>
+            <h3>Ładowanie produktów...</h3>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; <span id="currentYear"></span> Druk3D Shop</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./script.js"></script>
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
