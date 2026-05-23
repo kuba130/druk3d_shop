@@ -1,7 +1,7 @@
 const SUPABASE_URL = 'https://ussbdnhpgjnwmyaroecl.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzc2JkbmhwZ2pud215YXJvZWNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMTcyNzAsImV4cCI6MjA5NDg5MzI3MH0.AiH1Z3Lwo3P8T9ZMFXKsDaY1fp_KtnVDju0fAj-3fFk';
 const ADMIN_PASSWORD = 'admin123';
-const NTFY_TOPIC = 'sklep3d'; // ← ZMIEŃ NA SWÓJ KANAŁ NTFY!
+const NTFY_TOPIC = 'sklep3d'; // ← ZMIEŃ!
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function showToast(msg) {
@@ -65,7 +65,7 @@ async function loadShop() {
     grid.innerHTML = html;
 }
 
-// ===== MODAL ZAMÓWIENIA =====
+// ===== MODAL =====
 function openOrderModal(id, name, price) {
     document.getElementById('orderProduct').value = id;
     document.getElementById('orderProductName').textContent = name + ' - ' + Number(price).toFixed(2) + ' PLN';
@@ -87,24 +87,14 @@ if (orderForm) {
         var name = document.getElementById('customerName').value.trim();
         var phone = document.getElementById('customerPhone').value.trim();
 
-        if (!name || !phone) {
-            fb.textContent = 'Uzupelnij wszystkie pola';
-            fb.style.display = 'block';
-            return;
-        }
+        if (!name || !phone) { fb.textContent = 'Uzupelnij wszystkie pola'; fb.style.display = 'block'; return; }
 
         var prod = await client.from('products').select('*').eq('id', pid).single();
         var stock = prod.data.stock || 0;
-        
-        if (stock <= 0) {
-            fb.textContent = 'Przepraszamy, produkt wlasnie sie wyprzedal';
-            fb.style.display = 'block';
-            return;
-        }
+        if (stock <= 0) { fb.textContent = 'Produkt wyprzedany'; fb.style.display = 'block'; return; }
 
         await client.from('orders').insert([{ product_name: prod.data.name, product_price: prod.data.price, customer_name: name, customer_phone: phone }]);
         await client.from('products').update({ stock: stock - 1 }).eq('id', pid);
-
         sendNotification({ product_name: prod.data.name, product_price: prod.data.price, customer_name: name, customer_phone: phone, stock: stock - 1 });
 
         fb.textContent = 'Zamowienie przyjete!';
@@ -116,6 +106,31 @@ if (orderForm) {
 
 // ===== ADMIN =====
 function isLoggedIn() { return sessionStorage.getItem('admin') === 'yes'; }
+
+function editProduct(id) {
+    client.from('products').select('*').eq('id', id).single().then(function(r) {
+        var p = r.data;
+        document.getElementById('editId').value = p.id;
+        document.getElementById('productName').value = p.name;
+        document.getElementById('productPrice').value = p.price;
+        document.getElementById('productStock').value = p.stock || 0;
+        document.getElementById('productImage').value = p.image || '';
+        document.getElementById('productDescription').value = p.description || '';
+        document.getElementById('formTitle').textContent = '✏️ Edytuj produkt';
+        document.getElementById('submitBtn').textContent = 'Zapisz zmiany';
+        document.getElementById('cancelEditBtn').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
+function cancelEdit() {
+    document.getElementById('editId').value = '';
+    document.getElementById('addProductForm').reset();
+    document.getElementById('productStock').value = 1;
+    document.getElementById('formTitle').textContent = '➕ Dodaj nowy produkt';
+    document.getElementById('submitBtn').textContent = 'Dodaj produkt';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+}
 
 async function loadAdminProducts() {
     var list = document.getElementById('adminProductsList');
@@ -132,21 +147,32 @@ async function loadAdminProducts() {
     for (var i = 0; i < result.data.length; i++) {
         var p = result.data[i];
         var stock = p.stock || 0;
+        var stockColor = stock > 0 ? '#16a34a' : '#dc2626';
         html += '<div class="admin-product-item">' +
             '<div class="admin-product-info">' +
             '<div class="admin-product-thumb">' + (p.image ? '<img src="' + p.image + '">' : '🖨️') + '</div>' +
-            '<div class="admin-product-details"><strong>' + p.name + '</strong><span>' + Number(p.price).toFixed(2) + ' PLN | Stan: ' + stock + ' szt.</span></div>' +
+            '<div class="admin-product-details"><strong>' + p.name + '</strong><span>' + Number(p.price).toFixed(2) + ' PLN | <b style="color:' + stockColor + '">Stan: ' + stock + ' szt.</b></span></div>' +
             '</div>' +
-            '<button class="btn btn-danger" data-id="' + p.id + '">Usun</button>' +
+            '<div style="display:flex;gap:0.5rem;">' +
+            '<button class="btn btn-primary" style="padding:0.4rem 0.8rem;font-size:0.8rem;" data-edit="' + p.id + '">✏️ Edytuj</button>' +
+            '<button class="btn btn-danger" data-id="' + p.id + '">🗑️</button>' +
+            '</div>' +
             '</div>';
     }
     list.innerHTML = html;
+    
     list.querySelectorAll('.btn-danger').forEach(function(btn) {
         btn.addEventListener('click', async function() {
             if (!confirm('Usunac?')) return;
             await client.from('products').delete().eq('id', this.dataset.id);
             loadAdminProducts();
             showToast('Usunieto');
+        });
+    });
+
+    list.querySelectorAll('[data-edit]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            editProduct(this.dataset.edit);
         });
     });
 }
@@ -159,6 +185,7 @@ var loginScreen = document.getElementById('loginScreen');
 var adminPanel = document.getElementById('adminPanel');
 var logoutBtn = document.getElementById('logoutBtn');
 var addForm = document.getElementById('addProductForm');
+var cancelBtn = document.getElementById('cancelEditBtn');
 
 if (loginScreen && adminPanel) {
     if (isLoggedIn()) {
@@ -172,8 +199,7 @@ if (loginScreen && adminPanel) {
 if (loginForm) {
     loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        var pass = document.getElementById('loginPassword').value;
-        if (pass === ADMIN_PASSWORD) {
+        if (document.getElementById('loginPassword').value === ADMIN_PASSWORD) {
             sessionStorage.setItem('admin', 'yes');
             loginScreen.style.display = 'none';
             adminPanel.style.display = 'grid';
@@ -196,23 +222,41 @@ if (logoutBtn) {
     });
 }
 
+if (cancelBtn) {
+    cancelBtn.addEventListener('click', cancelEdit);
+}
+
 if (addForm) {
     addForm.addEventListener('submit', async function(e) {
         e.preventDefault();
+        var id = document.getElementById('editId').value;
         var name = document.getElementById('productName').value.trim();
         var price = parseFloat(document.getElementById('productPrice').value);
         var stock = parseInt(document.getElementById('productStock').value) || 1;
         var image = document.getElementById('productImage').value.trim();
         var desc = document.getElementById('productDescription').value.trim();
+        var fb = document.getElementById('formFeedback');
 
         if (!name || !price) return;
 
-        var result = await client.from('products').insert([{ name: name, price: price, stock: stock, image: image, description: desc }]);
-        if (!result.error) {
-            addForm.reset();
-            document.getElementById('productStock').value = 1;
-            loadAdminProducts();
-            showToast('Dodano produkt (stan: ' + stock + ' szt.)');
+        if (id) {
+            // EDYCJA
+            var result = await client.from('products').update({ name: name, price: price, stock: stock, image: image, description: desc }).eq('id', id);
+            if (!result.error) {
+                cancelEdit();
+                loadAdminProducts();
+                if (fb) { fb.textContent = 'Zapisano!'; fb.className = 'form-feedback success'; fb.style.display = 'block'; }
+            }
+        } else {
+            // DODAWANIE
+            var result = await client.from('products').insert([{ name: name, price: price, stock: stock, image: image, description: desc }]);
+            if (!result.error) {
+                addForm.reset();
+                document.getElementById('productStock').value = 1;
+                loadAdminProducts();
+                if (fb) { fb.textContent = 'Dodano!'; fb.className = 'form-feedback success'; fb.style.display = 'block'; }
+            }
         }
+        setTimeout(function() { if (fb) fb.style.display = 'none'; }, 3000);
     });
 }
