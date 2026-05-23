@@ -1,4 +1,4 @@
-const SUPABASE_URL = 'https://ussbdnhpgjnwmyaroecl.supabase.com';
+const SUPABASE_URL = 'https://ussbdnhpgjnwmyaroecl.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzc2JkbmhwZ2pud215YXJvZWNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMTcyNzAsImV4cCI6MjA5NDg5MzI3MH0.AiH1Z3Lwo3P8T9ZMFXKsDaY1fp_KtnVDju0fAj-3fFk';
 const ADMIN_PASSWORD = 'admin123';
 const NTFY_TOPIC = 'sklep3d'; // ← ZMIEŃ!
