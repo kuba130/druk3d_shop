@@ -240,24 +240,22 @@ if (addForm) {
         if (!name || !price) return;
 
         if (id) {
-            // EDYCJA - przez fetch
-            var response = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + id, {
-                method: 'PATCH',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_KEY,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify({ name: name, price: price, stock: stock, image: image, description: desc })
-            });
+            // EDYCJA = usuń stary + dodaj nowy
+            var deleteOk = await client.from('products').delete().eq('id', id);
             
-            if (response.ok) {
+            if (deleteOk.error) {
+                if (fb) { fb.textContent = '❌ Błąd usuwania starego'; fb.className = 'form-feedback error'; fb.style.display = 'block'; }
+                return;
+            }
+            
+            var result = await client.from('products').insert([{ name: name, price: price, stock: stock, image: image, description: desc }]);
+            
+            if (!result.error) {
                 cancelEdit();
                 loadAdminProducts();
                 if (fb) { fb.textContent = '✅ Zapisano!'; fb.className = 'form-feedback success'; fb.style.display = 'block'; }
             } else {
-                if (fb) { fb.textContent = '❌ Błąd: ' + response.status; fb.className = 'form-feedback error'; fb.style.display = 'block'; }
+                if (fb) { fb.textContent = '❌ Błąd: ' + result.error.message; fb.className = 'form-feedback error'; fb.style.display = 'block'; }
             }
         } else {
             // DODAWANIE
@@ -267,8 +265,6 @@ if (addForm) {
                 document.getElementById('productStock').value = 1;
                 loadAdminProducts();
                 if (fb) { fb.textContent = '✅ Dodano!'; fb.className = 'form-feedback success'; fb.style.display = 'block'; }
-            } else {
-                if (fb) { fb.textContent = '❌ Błąd dodawania'; fb.className = 'form-feedback error'; fb.style.display = 'block'; }
             }
         }
         setTimeout(function() { if (fb) fb.style.display = 'none'; }, 3000);
