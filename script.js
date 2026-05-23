@@ -1,7 +1,7 @@
 const SUPABASE_URL = 'https://ussbdnhpgjnwmyaroecl.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzc2JkbmhwZ2pud215YXJvZWNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMTcyNzAsImV4cCI6MjA5NDg5MzI3MH0.AiH1Z3Lwo3P8T9ZMFXKsDaY1fp_KtnVDju0fAj-3fFk';
 const ADMIN_PASSWORD = 'admin123';
-const NTFY_TOPIC = 'sklep3d'; // ← ZMIEŃ!
+const NTFY_TOPIC = 'sklep3d'; // ← ZMIEŃ NA SWÓJ KANAŁ!
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function showToast(msg) {
@@ -240,12 +240,24 @@ if (addForm) {
         if (!name || !price) return;
 
         if (id) {
-            // EDYCJA
-            var result = await client.from('products').update({ name: name, price: price, stock: stock, image: image, description: desc }).eq('id', id);
-            if (!result.error) {
+            // EDYCJA - przez fetch
+            var response = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + id, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_KEY,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({ name: name, price: price, stock: stock, image: image, description: desc })
+            });
+            
+            if (response.ok) {
                 cancelEdit();
                 loadAdminProducts();
-                if (fb) { fb.textContent = 'Zapisano!'; fb.className = 'form-feedback success'; fb.style.display = 'block'; }
+                if (fb) { fb.textContent = '✅ Zapisano!'; fb.className = 'form-feedback success'; fb.style.display = 'block'; }
+            } else {
+                if (fb) { fb.textContent = '❌ Błąd: ' + response.status; fb.className = 'form-feedback error'; fb.style.display = 'block'; }
             }
         } else {
             // DODAWANIE
@@ -254,7 +266,9 @@ if (addForm) {
                 addForm.reset();
                 document.getElementById('productStock').value = 1;
                 loadAdminProducts();
-                if (fb) { fb.textContent = 'Dodano!'; fb.className = 'form-feedback success'; fb.style.display = 'block'; }
+                if (fb) { fb.textContent = '✅ Dodano!'; fb.className = 'form-feedback success'; fb.style.display = 'block'; }
+            } else {
+                if (fb) { fb.textContent = '❌ Błąd dodawania'; fb.className = 'form-feedback error'; fb.style.display = 'block'; }
             }
         }
         setTimeout(function() { if (fb) fb.style.display = 'none'; }, 3000);
